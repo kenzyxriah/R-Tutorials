@@ -85,3 +85,6 @@ library(tidyverse)
 ggplot(data = penguins, aes(x = flipper_length_mm, y = body_mass_g )) + geom_point(aes(color = species, shape = species ))
 
 ```
+
+# what happens when I make new commands
+
