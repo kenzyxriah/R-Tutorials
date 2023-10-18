@@ -1,0 +1,87 @@
+---
+title: "R Introduction"
+author: "Qahhar"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+# Introduction: Install Packages
+```{r}
+#PalmerPenguins
+install.packages('palmerpenguins')
+```
+
+```{r}
+#Load Package
+
+library('palmerpenguins')
+```
+citation()
+citation("palmerpenguins") 
+
+### Python in R Markdown: Setting up environment
+```{r}
+install.packages("reticulate")
+
+```
+```{r}
+library(reticulate)
+
+py_env <- virtualenv_create()
+
+# py_install("pip")
+# py_install("numpy")
+# py_install("pandas")
+# py_install("matplotlib")
+# py_install("scipy")
+# py_install("scikit-learn")
+# py_install("seaborn")
+# Add more libraries as needed
+
+```
+#### Using Python for easy for simple algebra equations
+```{python}
+#!pip install numpy
+
+```
+
+```{python}
+list = [1,2,3,4,5]
+import numpy as np
+np.mean(list)
+```
+
+## Loading data in R from the palmer penguins library
+#### Similarly to the load iris from seaborn package in Python
+```{r}
+data(package = 'palmerpenguins')
+library('palmerpenguins')
+```
+
+```{r}
+data(penguins)
+#data(penguins_raw)
+```
+
+#View data
+```{r}
+head(penguins)
+#head(penguins_raw)
+#View(penguins)
+```
+
+#### Describe your data
+```{r}
+str(penguins)
+
+summary(penguins) #offers a quick descriptive summary of the columns in our dataset
+```
+
+#### Play around with the data, Visualization
+```{r}
+#install.packages("tidyverse")
+
+library(tidyverse)
+ggplot(data = penguins, aes(x = flipper_length_mm, y = body_mass_g )) + geom_point(aes(color = species, shape = species ))
+
+```
