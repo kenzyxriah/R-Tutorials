@@ -1,0 +1,187 @@
+---
+title: 'HackBio: Data Viz'
+author: "Qahhar"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+# Introduction
+
+The HackBio _DataScience4Life_ contest required it's participant to complete a weekly task
+
+"In this section, you are provided with a dataset and final figures. Your task is to reproduce the figures using the dataset alone". These words mark the exact instructions to be followed for this aspect of the contest
+
+We have also been advised to "Use only base R functions. Do not use any library or package such as ggplot2 to solve the tasks" as we proceed, yet I chose not to. Rationale?
+
+* I am not familiar of other methods to use nor do I find them to be an efficient way to approach coding
+
+* Only participants who have registered for the Data Science with R course hosted by HackBio are eligible to be graded/ranked. As you can guess, this doesn't include me
+
+In that light, here is my approcach to the weekly task
+
+### Firstly:
+We load in the very important package 'tidyverse'
+This library serves as a container for other necessary and helpful libraries in today's data science world
+
+```{r}
+library(tidyverse)
+```
+
+### Secondly:
+We retrieve the dataset to be worked on
+
+```{r}
+url <- "https://raw.githubusercontent.com/HackBio-Internship/public_datasets/main/R/datasets/Contests/Viz/datasets/fig_One_a_e.dat"
+
+# Create a destination and file name for the retirieved data and assign it to a variable x
+x <- "/cloud/project/Hackbio/fig_One_a_e.dat"
+x
+
+#Downloading the dataset, from the url to it's destination path 
+download.file(url, destfile = x)
+```
+
+### Thirdly:
+
+Read the retrieved data into your environment. Make sure that your working directory is the same as the destination path of the file
+
+- To check this
+```{r}
+getwd()
+```
+
+To read in this file, we utilize the read.table function, given a few arguments
+
+ - x: Basically the downloaded csv
+ 
+ - header: This command when sets to true(T) keeps the header of any given txt file when being read in as a table or a dataframe
+ 
+ - sep: Every plain txt file to be read into R's console has a delimeter, The very thing that defines their structure, For our .dat file, the delimeter is a tab, thus the '\t' notation
+ 
+```{r}
+fig_data <- read.table(x, header= T, sep = '\t')
+```
+
+### Now the stage is set for the visualization task
+
+It is good practice to convert dataframes or tables to a more convienient form for wranglingm which as 'tibbles'
+These tibbles are created from the library, Tibbles, and has been read in as one of the packages under the umbrella of the tidyverse
+
+```{r}
+#Converting the table to a more convenient data holder, a Tibble
+fig_tib <- as.tibble(fig_data)
+
+head(fig_tib, 5)
+```
+
+### Dataset Previewing
+Understanding the dimensions and structure of the dataset being worked with gives the analyst as good idea on what to expect as he/she goes down on the process
+
+```{r}
+dim(fig_tib) # Returns the dimension of our tibble
+```
+
+```{r}
+colnames(fig_tib) #This returns the no of columns in the given dataset
+```
+```{r}
+glimpse(fig_tib) #Returns a glimpse view of our dataset, as the name suggests
+```
+```{r}
+summary(fig_data) #Returns a descriptive summary of the entire dataset
+```
+
+We get a statistical overview of the dataset. 
+
+- A majority of the  columns are of number types with only one column/variable being a character/string type denoted by **chr**
+
+In order to explore the 'tech' column, we can use the tabyl from from the janitor package in R to give us a high end description of the columns values
+```{r}
+library(janitor)
+tabyl(fig_tib$tech)
+```
+From this, we find that the tech column has 10 unique values each of which are 8 in number, in line with the length of the dataset.
+
+This column would be used as the basis of subsetting the dataset in visualization.
+
+# Visualization Analysis
+
+As stated previously, the task is to replicate template graphs.
+Here is the [link](https://github.com/HackBio-Internship/public_datasets/blob/main/R/datasets/Contests/Viz/figure1a-1f.pdf) for reference
+
+**Setting up a theme e.g color, font size and whatnot saves a ton of stress**
+```{r}
+tech_colors <- rainbow(10) #Setting the colors of the unique labels of each group that are subjecting to the plot arguments
+# rainbow(n) is equal to 10 because we have 10 groups
+```
+
+### PROBLEM 1
+This problem seems to require the geom function (geom_line), and to understand the syntax of the argument to be passed, this was used:
+```{r}
+?geom_line() # Understanding the geom function we are working on
+```
+Creating a plot in R using an important package 'ggplot2',under the umbrella of the tidyverse, has some basic things to define a plot
+
+- gglot(data = ) defines the plot
+
+- aes(): This function maps what variables/columns would be plotted against one another. This then creates a grid of X and Y
+
+- geom func : is used to determine the plot type that the data points must follow
+
+```{r}
+ggplot(fig_tib, aes(x= depth, y = Unique_nr_frag_in_regions, color = tech)) +
+  geom_line() +
+    scale_color_manual(values = tech_colors) + #This function states that for each line, they would be representative of the tech_colors vector/list, assigned above
+  ylim(0, 11500)+ #y lim sets the y axis range of the plot. 12,000 was the desired peak
+  labs(title = 'Fig 1a', x = "Sequencing Depth", y = "Unique Fragments in Peaks") + #the labs function aids in labeling key aspects of any given plot
+  theme(legend.position = 'bottom') + # Legend position is set to the bottom
+  theme(plot.title = element_text(hjust = 0.5)) # This centralizes the plot title
+```
+
+For the next four graphs, we would use the same syntax with a difference of variables being plotted against one another
+
+### PROBLEM 2
+```{r}
+ggplot(fig_tib, aes(x= depth, y = TSS_enrichment, color = tech)) +
+geom_line() + 
+  scale_color_manual(values = tech_colors) + 
+  labs(title = 'Fig 1b', x = "Sequencing Depth", y = "Enrichment Peak") +
+  theme(legend.position = 'bottom') +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+### PROBLEM 3
+
+```{r}
+ggplot(fig_tib, aes(x= depth, y = X._unique_nr_frag_in_regions_in_cells, color = tech)) +
+  geom_line() +
+  scale_color_manual(values = tech_colors) +
+  labs(title = 'Fig 1c', x = "Sequencing Depth", y = "Sequencing Depth Efficiency") +
+  theme(legend.position = 'bottom') +
+  theme(plot.title = element_text(hjust = 0.5)) # This centralizes the plot title
+```
+
+### PROBLEM 4
+```{r}
+ggplot(fig_tib, aes(x= depth, y = median_cell_type_pred_score, color = tech)) +
+  geom_line() + ylim(0, 0.85) +
+  scale_color_manual(values = tech_colors) +
+  labs(title = 'Fig 1d', x = "Sequencing Depth", y = "Median Seurat Score") +
+  theme(legend.position = 'bottom') +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+### PROBLEM 5
+```{r}
+ggplot(fig_tib, aes(x= depth, y = fc__B_cell, color = tech)) +
+  geom_line() + ylim(0, 40) +
+  scale_color_manual(values = tech_colors) + 
+  labs(title = 'Fig 1e', x = "Sequencing Depth", y = "BCell Strength (FC)") +
+  theme(legend.position = 'bottom') +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+Sidenote: There are various ways in which the color scale for each plot could be changed. I just chose to stick with the given instruction.
+
+See you next week. Shalom!
+
