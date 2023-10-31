@@ -369,12 +369,10 @@ assign(paste("Data_for_", tech, sep = ""), tech_data)
 for (tech in unq_tech) {
   var_name <- paste("Data_for_", tech, sep = "")
   tech_data <- get(var_name)
-  
-  print(tech_data)
-  
+
   # Print the first few rows of each object
   cat("Data for", tech, ":\n")
-  print(head(tech_data), n = 2)
+  print(head(tech_data, n = 2))
 }
 
 par(mfrow = c(2,5)) #the first value is for rows and the second value is for columns
