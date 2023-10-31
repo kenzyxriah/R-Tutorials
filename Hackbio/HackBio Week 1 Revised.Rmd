@@ -1,0 +1,563 @@
+---
+title: 'Base R: HackBio Wk 1'
+author: "Qahhar"
+date: "2023-10-30"
+output: pdf_document
+---
+
+The HackBio _DataScience4Life_ contest required it's participant to complete a weekly task
+
+"In this section, you are provided with a dataset and final figures. Your task is to reproduce the figures using the dataset alone". These words mark the exact instructions to be followed for this aspect of the contest
+
+We have also been advised to "Use only base R functions. Do not use any library or package such as ggplot2 to solve the tasks" 
+
+In that light, here is my approach:
+
+# PROBLEM 1: FIG 1 A-E
+
+### Firstly:
+Ensure you're working in your preferred directory
+```{r}
+getwd()
+```
+
+# Secondly
+We retrieve the dataset to be worked on, in said directory
+
+```{r}
+url <- "https://raw.githubusercontent.com/HackBio-Internship/public_datasets/main/R/datasets/Contests/Viz/datasets/fig_One_a_e.dat"
+
+#Downloading the dataset, from the url , and using destfile to assign the file name 
+download.file(url, destfile = "fig_1_a_e.dat")
+```
+### Thirdly:
+
+Read the retrieved data into your environment.
+To read in this file, we utilize the read.table function, given a few arguments
+
+ - fig_1_a_e.dat: The name of our dataset
+ 
+ - header: This command when sets to true(T) keeps the header of any given txt file when being read in as a table or a data-frame
+ 
+ - sep: Every plain txt file to be read into R's console has a delimeter, The very thing that defines their structure, For our .dat file, the delimeter is a tab, thus the '\t' notation
+ 
+```{r}
+fig_data <- read.table("fig_1_a_e.dat", header= T, sep = '\t')
+
+head(fig_data)
+```
+
+
+### Dataset Previewing
+Understanding the dimensions and structure of the dataset being worked with gives the analyst as good idea on what to expect as he/she goes down on the process
+
+```{r}
+dim(fig_data) # Returns the dimension of our tibble
+```
+
+```{r}
+colnames(fig_data) #This returns the no of columns in the given dataset
+```
+```{r}
+summary(fig_data) #Returns a descriptive summary of the entire dataset
+```
+
+We get a statistical overview of the dataset. 
+
+- A majority of the  columns are of number types with only one column/variable being a character/string type denoted by **chr**
+
+In order to explore the 'tech' column, we can use "count" to give us a high end description of the columns values
+```{r}
+length(unique(fig_data$tech))
+
+library(dplyr)
+summarize(group_by(fig_data, tech), N = n())
+```
+From this, we find that the tech column has 10 unique values each of which are 8 in number, in line with the length of the dataset.
+
+**Plotting Figure 1**
+
+As stated previously, the task is to replicate template graphs.
+Here is the [link](https://github.com/HackBio-Internship/public_datasets/blob/main/R/datasets/Contests/Viz/figure1a-1f.pdf) for reference
+
+**Setting up a theme e.g color, font size and whatnot saves a ton of stress**
+```{r}
+tech_colors <- c("#00FFFF","#0066FF","#3300FF","#CC00FF","#FF0099","#FF0000","#FF9900","#CCFF00","#33FF00","#00FF66") #Setting the colors of the unique labels of each group that are subjecting to the plot arguments
+```
+
+**We would also be dealing with the tech column alot in this problem, so it's best to store the unique values somewhere
+```{r}
+technology <- c(unique(fig_data$tech)) # This extracts the unique values of tech in which we are interested in.
+```
+
+We would also create a layout for subsequent plots to fit into, and then have an output of a single panel file
+```{r}
+# Set up a 2x3 layout
+par(mfrow = c(2, 3))
+
+
+#Fig a
+#setting up a blank plot
+ plot(0,
+     type = "n",
+     xlim = c(5,40),
+     ylim = c(0,12000),
+     xlab= "Sequencing Depth",
+     ylab = "Unique Fragments in Peaks",
+     main = "Fig 1a")
+
+for (i in 1:10) {
+  filtered_data <- fig_data[fig_data$tech == technology[i],] 
+ # This command basically filters a dataset where tech would be equal to i index in technology
+  
+  #her telling progam to assign the values accordingly and set the colors individually
+  lines(filtered_data$depth,filtered_data$Unique_nr_frag_in_regions, col = tech_colors[i], lwd = 2)
+}
+
+# Fig B
+#setting up a blank plot
+plot(0,
+     type = "n",
+     xlim = c(5,40),
+     ylim = c(0,40),
+     xlab= "Sequencing Depth",
+     ylab = "Unique Fragments in Peaks",
+     main = "Fig 1b")
+
+for (i in 1:10) {
+  filtered_data <- fig_data[fig_data$tech == technology[i],] 
+ # This command basically filters a dataset where tech would be equal to i index in technology
+  
+  #her telling progam to assign the values accordingly and set the colors individually
+  lines(filtered_data$depth,filtered_data$TSS_enrichment, col = tech_colors[i], lwd = 2)
+}
+
+#Fig C
+ plot(0,
+     type = "n",
+     xlim = c(5,40),
+     ylim = c(0,0.5),
+     xlab= "Sequencing Depth",
+     ylab = "Sequencing Effeciency",
+     main = "Fig 1c")
+
+for (i in 1:10) {
+  filtered_data <- fig_data[fig_data$tech == technology[i],] 
+ # This command basically filters the dataset where tech would be equal to i index in technology
+  
+  #her telling progam to assign the values accordingly and set the colors individually
+  lines(filtered_data$depth,filtered_data$X._unique_nr_frag_in_regions_in_cells, col = tech_colors[i], lwd = 2)
+}
+
+# Fig D
+#setting up a blank plot
+ plot(0,
+     type = "n",
+     xlim = c(5,40),
+     ylim = c(0,0.85),
+     xlab= "Sequencing Depth",
+     ylab = "Median Seurat Score",
+     main = "Fig 1d")
+
+for (i in 1:10) {
+  filtered_data <- fig_data[fig_data$tech == technology[i],] 
+ # This command basically filters the dataset where tech would be equal to i index in technology
+  
+  #her telling progam to assign the values accordingly and set the colors individually
+  lines(filtered_data$depth,filtered_data$median_cell_type_pred_score, col = tech_colors[i], lwd = 2)
+}
+
+# Fig E
+ plot(0,
+     type = "n",
+     xlim = c(5,40),
+     ylim = c(0,40),
+     xlab= "Sequencing Depth",
+     ylab = "BCell Strength (FC)",
+     main = "Fig 1e")
+
+for (i in 1:10) {
+  filtered_data <- fig_data[fig_data$tech == technology[i],] 
+ # This command basically filters the dataset where tech would be equal to i index in technology
+  
+  #her telling progam to assign the values accordingly and set the colors individually
+  lines(filtered_data$depth,filtered_data$fc__B_cell, col = tech_colors[i], lwd = 2)
+}
+
+```
+
+ Putting all the plots together, it is easier to draw comparisons from the relationships/trend of sequencing depth and other variables in the data frame
+ 
+
+# PROBLEM 2
+
+These series of problems require datasets to be retrieved
+
+```{r}
+#For Figure F
+url <- "https://github.com/HackBio-Internship/public_datasets/raw/main/R/datasets/Contests/Viz/datasets/fig_one_f"
+
+# Read in the table
+df_f <- read.table(url, header = TRUE, sep = "\t")
+
+# For Figure G
+url <- "https://github.com/HackBio-Internship/public_datasets/raw/main/R/datasets/Contests/Viz/datasets/fig_one_g"
+
+df_g <- read.table(url, header = TRUE, sep = "\t")
+
+# For Figure H
+url <- "https://raw.githubusercontent.com/HackBio-Internship/public_datasets/main/R/datasets/Contests/Viz/datasets/fig_one_h"
+
+df_h <- read.table(url, header = TRUE, sep = "\t")
+
+# For Figure J
+url <- "https://raw.githubusercontent.com/HackBio-Internship/public_datasets/main/R/datasets/Contests/Viz/datasets/fig_one_j"
+
+df_j <- read.table(url, header = TRUE, sep = "\t")
+
+```
+
+We would be using a different color theme, custom
+```{r}
+new_tech_colors <- c(lightblue = '#5899DA',
+               lightorange = '#E8743B',
+               lightgreen = "#19A979",
+               lightred = "#ED4A7B",
+               lightviolet = '#945ECF',
+               lightturq = "#13A4B4",
+               lightpurple = "#525DF4",
+               lightmagenta = "#BF399E",
+               grey = "#6C8893",
+               lightamber = "#EE6868",
+               deepblue = "#2F6497")
+```
+
+**Plotting figure 2**
+```{r}
+# Set up a 2x3 layout
+par(mfrow = c(2, 3))
+
+
+# Fig F
+technology_f <- c(unique(df_f$technology)) # This extracts the unique values of tech in which we are interested in.
+
+
+plot(0,
+     type = "n",
+     xlim = c(0, 13000),
+     ylim = c(0.08, 0.20),
+     xlab= "Median Unique Fragments",
+     ylab = "Median Scrublet Score",
+     main = "Fig 1f",
+     las = 1)
+
+
+for (i in 1:10) {
+  filtered_f<- df_f[df_f$technology == technology_f[i],] 
+ # This command basically filters the dataset where tech would be equal to i index in technology
+
+  points(filtered_f$Median_Unique_nr_frag_in_regions,
+         filtered_f$Mean_scrublet_doublet_scores_fragments, col = new_tech_colors[i], pch = 20)
+}
+
+#Fig G
+
+technology_g <- c(unique(df_g$technology)) # This extracts the unique values of tech in which we are interested in.
+
+
+ plot(0,
+     type = "n",
+     xlim = c(0, 25000),
+     ylim = c(0, 400),
+     xlab= "Median Unique Fragments",
+     ylab = "Median Freemuxlet",
+     main = "Fig 1g",
+     las = 1)
+
+
+for (i in 1:10) {
+  filtered_g<- na.omit(df_g[df_g$technology == technology_g[i],]) 
+ # This command basically filters the dataset where tech would be equal to i index in technology
+
+  points(filtered_g$Median_unique_nr_frag,
+         filtered_g$fmx_delta_donor_llk, col = new_tech_colors[i], pch = 20)
+}
+ 
+# Figure H
+technology_h <- c(unique(df_h$technology)) # This extracts the unique values of tech in which we are interested in.
+
+
+ plot(0,
+     type = "n",
+     xlim = c(2.5, 4.0),
+     ylim = c(0.4, 0.9),
+     xlab= "Median Unique Fragments",
+     ylab = "Median Seurat Score",
+     main = "Fig 1h",
+     las = 1)
+
+
+for (i in 1:10) {
+  filtered_h<- df_h[df_h$technology == technology_h[i],]
+ # This command basically filters the dataset where tech would be equal to i index in technology
+
+  points(filtered_h$log_median_unique_nr_frag_in_regions,
+         filtered_h$seurat_score, col = new_tech_colors[i], pch = 20)
+}
+ 
+# For Figure J
+unq_tech <- unique(df_j$technology)
+
+#blank plot
+plot(1,
+    type = "n",
+    xlim = c(12 , 24.9),
+    ylim = c(1.0,4.0),
+    xlab = "Median Strength",
+    ylab = "Median Distance to TSS",
+    main = "Fig 1j",
+    las=1)
+
+# grid()
+
+for (i in 1:10) {
+ filtered_j <- df_j[df_j$technology == unq_tech[i],]
+  
+#Checking if the value in 'i'th position in technology matches to the same in the dataframe
+ 
+# Telling program to assign the values accordingly and set the colors individually
+
+points(filtered_j$top2kdars_median_dar_tss_dist/1000,filtered_j$top2kdars_median_dar_logfc,col = new_tech_colors[i], pch=20)
+
+}
+
+``` 
+
+
+# PROBLEM 3
+What this hopes to do is to plot the sample id against variable "Seurat Score", subsetting each plot by the mode of "tech" applicable to the data 
+
+Let's first retrieve the data
+```{r}
+
+url <- "https://raw.githubusercontent.com/HackBio-Internship/public_datasets/main/R/datasets/Contests/Viz/datasets/figure_one_k"
+
+df_k <- read.table(url, header = TRUE, sep = "\t")
+```
+There seems to be an unnecessary data so it would be beneficial to drop it
+```{r}
+new_data <- df_k[, -1]
+head(new_data)
+```
+Basically what the code above states is that, pick all rows of the previous df_k dataframe and do not select the first column using the (-) and index (1)
+
+_Note: - is not minus_
+
+**Plotting Figure 3**
+```{r}
+unq_tech <- unique(new_data$tech)
+unq_tech
+
+
+# Accessing the different "Data_for_" objects
+
+for (tech in unq_tech) {
+tech_data <- new_data[new_data$tech == tech, ] # Filter data for the current technology
+assign(paste("Data_for_", tech, sep = ""), tech_data)
+}
+
+for (tech in unq_tech) {
+  var_name <- paste("Data_for_", tech, sep = "")
+  tech_data <- get(var_name)
+  
+  print(tech_data)
+  
+  # Print the first few rows of each object
+  cat("Data for", tech, ":\n")
+  print(head(tech_data), n = 2)
+}
+
+par(mfrow = c(2,5)) #the first value is for rows and the second value is for columns
+boxplot(Data_for_ddseq$seurat_cell_type_pred_score ~ Data_for_ddseq$sample_id,
+main = "ddseq",
+ylim = c(0.0, 1.0),
+xlab = "sample_id",
+ylab = "Seurat Score",
+col = "#1fa342",
+xaxt = "n") #xaxt = “n” to remove the ticks from the x-axis
+
+grid()
+
+boxplot (Data_for_mtscatacfacs$seurat_cell_type_pred_score ~
+Data_for_mtscatacfacs$sample_id,
+main = "mtscatacfacs",
+ylim = c(0.0, 1.0),
+
+xlab = "sample_id",
+ylab = "Seurat Score",
+col = "#a34d1f",
+xaxt = "n")
+
+boxplot (Data_for_10xmultiome$seurat_cell_type_pred_score ~
+Data_for_10xmultiome$sample_id,
+main = "10xmultiome",
+ylim = c(0.0, 1.0),
+xlab = "sample_id",
+ylab = "Seurat Score",
+col = "#a3891f",
+xaxt = "n")
+
+boxplot (Data_for_10xv11$seurat_cell_type_pred_score ~ Data_for_10xv11$sample_id,
+main = "10xv11",
+ylim = c(0.0, 1.0),
+xlab = "sample_id",
+ylab = "Seurat Score",
+col = "#ED4A7B",
+xaxt = "n")
+
+boxplot (Data_for_10xv11c$seurat_cell_type_pred_score ~ Data_for_10xv11c$sample_id,
+main = "10xv11c",
+ylim = c(0.0, 1.0),
+xlab = "sample_id",
+ylab = "Seurat Score",
+col = "#42032f",
+xaxt = "n")
+
+boxplot (Data_for_10xv2$seurat_cell_type_pred_score ~ Data_for_10xv2$sample_id,
+main = "10xv2",
+
+ylim = c(0.0, 1.0),
+xlab = "sample_id",
+ylab = "Seurat Score",
+col = "#210c45",
+xaxt = "n")
+
+boxplot (Data_for_hydrop$seurat_cell_type_pred_score ~ Data_for_hydrop$sample_id,
+main = "hydrop",
+ylim = c(0.0, 1.0),
+xlab = "sample_id",
+ylab = "Seurat Score",
+col = "#0c452e",
+xaxt = "n")
+
+boxplot (Data_for_mtscatac$seurat_cell_type_pred_score ~ Data_for_mtscatac$sample_id,
+main = "mtscatac",
+ylim = c(0.0, 1.0),
+xlab = "sample_id",
+ylab = "Seurat Score",
+col = "#BF399E",
+xaxt = "n")
+
+boxplot (Data_for_s3atac$seurat_cell_type_pred_score ~ Data_for_s3atac$sample_id,
+main = "s3atac",
+ylim = c(0.0, 1.0),
+xlab = "sample_id",
+ylab = "Seurat Score",
+col = "#611918",
+xaxt = "n")
+
+boxplot (Data_for_10xv1$seurat_cell_type_pred_score ~ Data_for_10xv1$sample_id,
+
+main = "10xv1",
+ylim = c(0.0, 1.0),
+xlab = "sample_id",
+ylab = "Seurat Score",
+col = "#6e6464",
+xaxt = "n")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
