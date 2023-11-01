@@ -1,0 +1,333 @@
+---
+title: "SNP Variation Analysis"
+author: "Qahhar"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+# INTRODUCTION
+
+Welcome to Week 2 of the contest:
+
+- Here we are to analysze a dataset that's an extract/subset of the data from GEUVADIS, a human population genome wide association studies for height across 5 super populations of the world.
+
+**What is Our Problem Statement?**
+
+Common single-nucleotide polymorphisms (SNPs) are predicted to explain over 50% of phenotypic variation in human height, but identifying the specific variants and associated regions requires huge sample sizes.
+
+Given a set of over 25,000 unique SNPs, Your task is to identify and describe these interesting SNPs and their behaviour across the 5 super populations. Overall, we want you to use data to emphasise the need for diversity in human sequencing projects.
+
+### Description of the columns in the dataset:
+
+**Abbreviations in the dataset**
+
+- **AFR**: African (mostly African American)
+
+- **EAS**: East-Asian
+
+- **SAS**: South-Asian
+
+- **HIS**: Hispanic
+
+- **EUR**: European
+
+**Column Description (12)**
+
+- **SNPID**: (represented as CHR:POS:REF:ALT)
+
+- **RSID**: (RS NUMBER, WHEN AVAILABLE)
+
+- **CHR**: CHROMOSOME
+
+- **POS**: GENOMIC POSIION (BASE PAIR) - hg19/hg37 BUILD
+
+- **EFFECT_ALLELE**: Mutant allele sequence
+
+- **OTHER_ALLELE**: Reference Allele Sequence
+
+- **EFFECT_ALLELE_FREQ**: (Minor allele frequency)
+
+- **BETA**: Odds probability (6 significant figures)
+
+- **SE**: Standard Error(3 significant figures)
+
+- **P**: P-value
+
+- **N**: Sample size
+
+
+**Questions to be answered**
+This phase focuses on EDA, Visualization and Reporting, as expected questions would be asked.
+We have to understand the trends/insights that could be uncovered from this data
+
+Here are the list of questions that sparked my interest
+Certainly! Here are all the questions you can address with the given dataset:
+
+- How many SNPs are significant (p-value < 0.01) for variability in height (MAF > 0.01) in all the super populations?
+
+- How much of Europeans' genetic variability can/cannot be found in other super populations? Does this provide enough argument for increasing the diversity of sequencing projects?
+
+- What is the average effect size (BETA) for SNPs with a minor allele frequency (MAF) greater than 0.01?
+
+- Are there any SNPs associated with height that show a different effect size (BETA) between different super populations?
+
+- Is there a correlation between the effect allele frequency (EFFECT_ALLELE_FREQ) and the effect size (BETA) for SNPs associated with height?
+
+- Can you identify the SNP (RSID) with the highest and lowest effect size (BETA) for each super population?
+
+
+**Let's Get it!!**
+
+### Firstly, 
+We load all necessary packages for this analysis. This is good practice.
+
+
+```{r}
+library(tidyverse)
+library(tibble)
+library(janitor)
+library(skimr)
+library(ggplot2)
+library(devtools)
+library(patchwork)
+library(knitr)
+library(kableExtra)
+library(reshape2)
+
+```
+
+### Secondly;
+We retrieve the dataset and read it into a more suitable for analysis, that is, a dataset
+```{r}
+url <- "https://raw.githubusercontent.com/HackBio-Internship/public_datasets/main/R/datasets/Contests/humanGeneticVariationsSamples.tsv"
+
+#Downloading the dataset, using destfile to assign it a file name 
+download.file(url, destfile = "SNP.tsv")
+
+#Read the file in, it has a space delimeter
+
+df_SNP <- read.delim("SNP.tsv", sep = " ")
+
+# Reset the row names to create a new index to make for smoother appearance
+rownames(df_SNP) <- NULL
+
+head(df_SNP, n = 3)
+```
+
+### DESCRIPTIVE SUMMARY OF THE DATA
+In a bid to explore the data, understanding the dimensions of said data and grasping statistical summary of interesting aspects of our data
+```{r}
+#Returns the full dimensions (no of rows and columns) of the data
+dim(df_SNP)
+
+# Extracts the column names
+colnames(df_SNP)
+
+#Provides a brief glimpse into our data
+glimpse(df_SNP)
+
+# Returns high level statistical summary of our dataset
+summary(df_SNP)
+
+```
+This has enables us to retrive the information that the dataset contains 25000 observations/rows whilst having 12 columns as stated previously in the introduction
+Our preview also tells us that we have FIVE character/string columns, namely
+
+- SNPID
+
+- RSID
+
+- EFFECT_ALLELE
+
+- OTHER_ALLELE
+
+- ANCESTRY
+
+### DATA CLEANING
+Before going any further, it is best practice to perform simple data cleaning techniques on a given dataset.
+
+A data cleaning cadence would be
+
+- Observe and deal with missing values
+
+- Search for through put duplicates in the data
+
+- Make sure all data are in the right data type(they are)
+
+**Missing Values**
+```{r}
+# Count rows with at least one NA
+count <- sum(rowSums(is.na(df_SNP)) > 0)
+
+cat("Number of rows with at least one NA:", count, "\n")
+
+# What is the column with a large sumn of missing values 
+sum(is.na(df_SNP$P))
+
+sum(is.na(df_SNP$SE))
+
+sum(is.na(df_SNP$BETA))
+
+
+# Create a subset data with no missing values to analyze
+# First, create a logical vector of complete cases
+complete_rows <- complete.cases(df_SNP)
+
+# Subset the data frame to retain only rows with complete data
+filtered_df <- df_SNP[complete_rows, ]
+nrow(filtered_df)
+
+```
+complete.cases(df) returns a logical vector that is **TRUE** for rows with complete data (no missing values) and FALSE for rows with missing values.
+
+We use this logical vector to subset the original data frame df, keeping only the rows where complete_rows is TRUE. This results in a new data frame called filtered_df that contains only rows with complete data & contain only the rows that have no missing values.
+
+**Duplicates**
+```{r}
+# Check for duplicate rows
+duplicate_rows <- duplicated(filtered_df)
+
+# Subset the data frame to retain only the first occurrence of each unique row
+no_duplicates <- filtered_df[!duplicate_rows, ]
+nrow(no_duplicates)
+
+```
+
+We find that there is no single occurence of through duplication across a row
+
+**Renaming column**
+The provided dataset seems to have column names like "SNPID," "RSID," "CHR," etc., which are meaningful and descriptive. But it's best to have your columns as lowercase
+
+```{r}
+renamed_df <- rename_with(no_duplicates, tolower)
+
+colnames(renamed_df)
+```
+
+Convert it to a simpler name
+```{r}
+gene_var <- data.frame(renamed_df)
+dim(gene_var)
+
+```
+**Given our gene_var dataset, we can begin further exploration**
+
+### EDA
+
+Firstly, I'd like to summarize and understand how the categorical columns reflect on the numericals
+
+1. **ANCESTORY**
+```{r}
+unique(gene_var$ancestry)
+
+tabyl(gene_var$ancestry)
+  
+
+```
+From this data, we can see that the category that probably contributed to the missing values in the df_SNP dataset was "EAST_ASIA"
+But it's evident that each group would have contributed 5000 values in the original data set
+
+** Creating summary tables surrounding this column**
+```{r}
+gene_var %>%
+  group_by(ancestry) %>%
+  summarize(n = n(), mean = )
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
