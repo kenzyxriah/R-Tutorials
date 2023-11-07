@@ -587,4 +587,9 @@ probability (Beta) score, as well as a higher frequency mark of
 occurring in the `European` descent as opposed to it's counterpart,
 `Africa`
 
+**Citation**: Yengo, L., Vedantam, S., Marouli, E. *et al.* A saturated
+map of common genetic variants associated with human
+height. *Nature* **610**, 704--712
+(2022). <https://doi.org/10.1038/s41586-022-05275-y>
+
 Thank you!
