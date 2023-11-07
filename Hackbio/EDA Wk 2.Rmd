@@ -3,101 +3,131 @@ title: "SNP Variation Analysis"
 author: "Qahhar"
 date: "`r Sys.Date()`"
 output: pdf_document
+editor_options: 
+  markdown: 
+    wrap: 72
 ---
 
 # INTRODUCTION
 
 Welcome to Week 2 of the contest:
 
-- Here we are to analysze a dataset that's an extract/subset of the data from GEUVADIS, a human population genome wide association studies for height across 5 super populations of the world.
+-   Here we are to analys=ze a dataset that's an extract/subset of the
+    data from GEUVADIS, a human population genome wide association
+    studies for height across 5 super populations of the world.
 
 **What is Our Problem Statement?**
 
-Common single-nucleotide polymorphisms (SNPs) are predicted to explain over 50% of phenotypic variation in human height, but identifying the specific variants and associated regions requires huge sample sizes.
+Common single-nucleotide polymorphisms (SNPs) are predicted to explain
+over 50% of phenotypic variation in human height, but identifying the
+specific variants and associated regions requires huge sample sizes.
 
-Given a set of over 25,000 unique SNPs, Your task is to identify and describe these interesting SNPs and their behaviour across the 5 super populations. Overall, we want you to use data to emphasise the need for diversity in human sequencing projects.
+Given a set of over 25,000 unique SNPs, Your task is to identify and
+describe these interesting SNPs and their behaviour across the 5 super
+populations. Overall, we want you to use data to emphasize the need for
+diversity in human sequencing projects.
 
 ### Description of the columns in the dataset:
 
-**Abbreviations in the dataset**
+**Abbreviations in the data**
 
-- **AFR**: African (mostly African American)
+-   **AFR**: African (mostly African American)
 
-- **EAS**: East-Asian
+-   **EAS**: East-Asian
 
-- **SAS**: South-Asian
+-   **SAS**: South-Asian
 
-- **HIS**: Hispanic
+-   **HIS**: Hispanic
 
-- **EUR**: European
+-   **EUR**: European
 
 **Column Description (12)**
 
-- **SNPID**: (represented as CHR:POS:REF:ALT)
+-   **SNPID**: represented as CHR:POS:REF:ALT; is a unique identifier
+    for each SNP
 
-- **RSID**: (RS NUMBER, WHEN AVAILABLE)
+-   **RSID**: RS NUMBER; is a reference identifier for known SNPs
 
-- **CHR**: CHROMOSOME
+-   **CHR**: CHROMOSOME; specifies the chromosome where the SNP is
+    located
 
-- **POS**: GENOMIC POSIION (BASE PAIR) - hg19/hg37 BUILD
+-   **POS**: GENOMIC POSIION (BASE PAIR); gives the specific position of
+    the SNP on the chromosome
 
-- **EFFECT_ALLELE**: Mutant allele sequence
+-   **EFFECT_ALLELE**: Mutant allele sequence; represents one of the
+    alleles at the SNP that is associated with a particular effect, in
+    our case height variation
 
-- **OTHER_ALLELE**: Reference Allele Sequence
+-   **OTHER_ALLELE**: Reference Allele Sequence
 
-- **EFFECT_ALLELE_FREQ**: (Minor allele frequency)
+-   **EFFECT_ALLELE_FREQ**: Minor allele frequency; indicates how
+    frequently the "effect allele" occurs in the population.
 
-- **BETA**: Odds probability (6 significant figures)
+-   **BETA**: Odds probability; is a measure of how much the effect
+    allele affects the outcome. A negative beta suggests a decrease in
+    height, and a positive beta suggests an increase
 
-- **SE**: Standard Error(3 significant figures)
+-   **SE**: Standard Error; associated with the beta, representing the
+    uncertainty in the effect estimate.
 
-- **P**: P-value
+-   **P**: P-value which tells us how statistically significant the
+    association between the SNP and height variation is.
 
-- **N**: Sample size
+-   **N**: Sample size, indicating how many individuals' data were used
+    in the analysis Imagine: n value here is 100692, which means that
+    data for this particular SNP (snpid) was available for 100,692
+    individuals of African ancestry. Here it indicates the number of
+    individuals from a specific ancestry or super population for whom
+    data on that SNP is available.
 
+**Questions to be answered**:
 
-**Questions to be answered**
-This phase focuses on EDA, Visualization and Reporting, as expected questions would be asked.
-We have to understand the trends/insights that could be uncovered from this data
+This phase focuses on EDA, Visualization and Reporting, as expected
+questions would be asked. We have to understand the trends/insights that
+could be uncovered from this data
 
-Here are the list of questions that sparked my interest
-Certainly! Here are all the questions you can address with the given dataset:
+Here are the list of questions that sparked my interest :
 
-- How many SNPs are significant (p-value < 0.01) for variability in height (MAF > 0.01) in all the super populations?
+-   How many SNPs are significant (p-value \< 0.01) for variability in
+    height (MAF \> 0.01) in all the super populations?
 
-- How much of Europeans' genetic variability can/cannot be found in other super populations? Does this provide enough argument for increasing the diversity of sequencing projects?
+-   What is the average effect size (BETA) for SNPs with a minor allele
+    frequency (MAF) greater than 0.01, using the significant SNPs?
 
-- What is the average effect size (BETA) for SNPs with a minor allele frequency (MAF) greater than 0.01?
+-   What is the level of correlation between the effect allele frequency
+    (EFFECT_ALLELE_FREQ) and the effect size (BETA) for SNPs associated
+    with height, if there is any?
 
-- Are there any SNPs associated with height that show a different effect size (BETA) between different super populations?
+-   How much of Europeans' genetic variability can/cannot be found in
+    other super populations? Does this provide enough argument for
+    increasing the diversity of sequencing projects?
 
-- Is there a correlation between the effect allele frequency (EFFECT_ALLELE_FREQ) and the effect size (BETA) for SNPs associated with height?
-
-- Can you identify the SNP (RSID) with the highest and lowest effect size (BETA) for each super population?
-
+-   For European SNPs found in other super populations as well, do their
+    statistical measures differ?
 
 **Let's Get it!!**
 
-### Firstly, 
-We load all necessary packages for this analysis. This is good practice.
+### Firstly,
 
+We load all necessary packages for this analysis. This is good practice.
 
 ```{r}
 library(tidyverse)
 library(tibble)
 library(janitor)
-library(skimr)
 library(ggplot2)
-library(devtools)
 library(patchwork)
 library(knitr)
 library(kableExtra)
-library(reshape2)
+library(corrplot)
 
 ```
 
 ### Secondly;
-We retrieve the dataset and read it into a more suitable for analysis, that is, a dataset
+
+We retrieve the dataset and read it into a more suitable for analysis,
+that is, a dataset
+
 ```{r}
 url <- "https://raw.githubusercontent.com/HackBio-Internship/public_datasets/main/R/datasets/Contests/humanGeneticVariationsSamples.tsv"
 
@@ -115,7 +145,10 @@ head(df_SNP, n = 3)
 ```
 
 ### DESCRIPTIVE SUMMARY OF THE DATA
-In a bid to explore the data, understanding the dimensions of said data and grasping statistical summary of interesting aspects of our data
+
+In a bid to explore the data, understanding the dimensions of said data
+and grasping statistical summary of interesting aspects of our data
+
 ```{r}
 #Returns the full dimensions (no of rows and columns) of the data
 dim(df_SNP)
@@ -130,31 +163,29 @@ glimpse(df_SNP)
 summary(df_SNP)
 
 ```
-This has enables us to retrive the information that the dataset contains 25000 observations/rows whilst having 12 columns as stated previously in the introduction
-Our preview also tells us that we have FIVE character/string columns, namely
 
-- SNPID
+This has enables us to retrive the information that the dataset contains
+25000 observations/rows whilst having 12 columns as stated previously in
+the introduction Our preview also tells us that we have FIVE
+character/string columns, namely
 
-- RSID
-
-- EFFECT_ALLELE
-
-- OTHER_ALLELE
-
-- ANCESTRY
+-   SNPID, RSID , EFFECT_ALLELE , OTHER_ALLELE, ANCESTRY
 
 ### DATA CLEANING
-Before going any further, it is best practice to perform simple data cleaning techniques on a given dataset.
+
+Before going any further, it is best practice to perform simple data
+cleaning techniques on a given dataset.
 
 A data cleaning cadence would be
 
-- Observe and deal with missing values
+-   Observe and deal with missing values
 
-- Search for through put duplicates in the data
+-   Search for through put duplicates in the data
 
-- Make sure all data are in the right data type(they are)
+-   Make sure all data are in the right data type(they are)
 
 **Missing Values**
+
 ```{r}
 # Count rows with at least one NA
 count <- sum(rowSums(is.na(df_SNP)) > 0)
@@ -178,11 +209,18 @@ filtered_df <- df_SNP[complete_rows, ]
 nrow(filtered_df)
 
 ```
-complete.cases(df) returns a logical vector that is **TRUE** for rows with complete data (no missing values) and FALSE for rows with missing values.
 
-We use this logical vector to subset the original data frame df, keeping only the rows where complete_rows is TRUE. This results in a new data frame called filtered_df that contains only rows with complete data & contain only the rows that have no missing values.
+complete.cases(df) returns a logical vector that is **TRUE** for rows
+with complete data (no missing values) and FALSE for rows with missing
+values.
+
+We use this logical vector to subset the original data frame df, keeping
+only the rows where complete_rows is TRUE. This results in a new data
+frame called filtered_df that contains only rows with complete data &
+contain only the rows that have no missing values.
 
 **Duplicates**
+
 ```{r}
 # Check for duplicate rows
 duplicate_rows <- duplicated(filtered_df)
@@ -193,30 +231,56 @@ nrow(no_duplicates)
 
 ```
 
-We find that there is no single occurence of through duplication across a row
+We find that there is no single occurrence where there is through
+duplication across an entire row
 
-**Renaming column**
-The provided dataset seems to have column names like "SNPID," "RSID," "CHR," etc., which are meaningful and descriptive. But it's best to have your columns as lowercase
+**Dropping Columns**
+
+For our analysis, certain columns seems to not be important. Let me
+explain
+
+**rsid**:
+
+The `rsid` column contains reference SNP cluster IDs, which are unique
+identifiers used to reference specific SNPs in genomic databases. it is
+beneficial to remove the `rsid` column because, similar to `snpid`, it's
+primarily an identifier for SNPs and doesn't contribute directly to the
+analysis. Removing it helps streamline the dataset for the analysis of
+SNP significance and population differences.
 
 ```{r}
-renamed_df <- rename_with(no_duplicates, tolower)
+col_dropped <- no_duplicates[, !(names(no_duplicates) %in% c("RSID"))]
+```
+
+**Renaming column**
+
+The provided dataset seems to have column names like "SNPID," "POS"
+"CHR," etc., which are meaningful and descriptive. But it's best to have
+column names in lowercase
+
+```{r}
+renamed_df <- rename_with(col_dropped, tolower)
 
 colnames(renamed_df)
 ```
 
-Convert it to a simpler name
+Convert it to a simpler name,
+
 ```{r}
-gene_var <- data.frame(renamed_df)
+gene_var <- data.frame(renamed_df) 
+
 dim(gene_var)
 
 ```
-**Given our gene_var dataset, we can begin further exploration**
+
+Given our gene_var dataset, we can begin further exploration
 
 ### EDA
 
-Firstly, I'd like to summarize and understand how the categorical columns reflect on the numericals
+This section would revolve around the `Ancestry` column, which contains
+5 super populations of our data set, to understand the significant
+difference of height per category based on SNPs found
 
-1. **ANCESTORY**
 ```{r}
 unique(gene_var$ancestry)
 
@@ -224,110 +288,303 @@ tabyl(gene_var$ancestry)
   
 
 ```
-From this data, we can see that the category that probably contributed to the missing values in the df_SNP dataset was "EAST_ASIA"
-But it's evident that each group would have contributed 5000 values in the original data set
 
-** Creating summary tables surrounding this column**
+From this data, we can see that the category that probably contributed
+to the missing values in the df_SNP data set was "EAST_ASIA" But it's
+evident that each group would have contributed 5000 values in the
+original data set
+
+**How many SNPs are significant (p-value \< 0.01) for variability in
+height (MAF \> 0.01) in all the super populations?**
+
+To identify SNPs significantly associated with height variability, a
+filtering approach is employed based on p-values (p-value \< 0.01) and
+Minor Allele Frequency (MAF \> 0.01). MAF quantifies the frequency of
+the less common allele in the population.
+
+The rationale is to focus on SNPs where the effect allele (associated
+with height) is relatively common. This is reflected in the use of
+`effect_allele_freq` as a proxy for MAF, as the more common the effect
+allele, the more likely it is to have a substantial impact on height.
+
 ```{r}
-gene_var %>%
-  group_by(ancestry) %>%
-  summarize(n = n(), mean = )
+significant_snps <- gene_var %>%
+  filter(p < 0.01, effect_allele_freq > 0.01)
+
+# Count the number of significant SNPs
+num_significant_snps <- nrow(significant_snps)
+
+# Print the result
+cat("Number of significant SNPs:", num_significant_snps, "\n")
 ```
 
+**What is the average effect size (BETA) for SNPs with a minor allele
+frequency (MAF) greater than 0.01 per super population?**
 
+```{r}
+significant_snps %>%
+  group_by(ancestry) %>%
+  filter(effect_allele_freq > 0.01) %>%
+  summarize(beta_mean = round(mean(beta), 5))
 
 
 
+```
 
+**What is the level of correlation between numerical columns and the
+effect size (BETA) for SNPs associated with height, if there is any?**
 
+It is safe to assume that SNPs with a p - value lower than 0.01 have a
+higher significance and higher chance of causing variability within
+height, so we would continue to work with the `significant_snps` data
+set
 
+If correlation coefficient, calculated, is close to 1, it suggests a
+strong positive correlation, while a value close to -1 indicates a
+strong negative correlation. If the correlation coefficient is close to
+0, it suggests little to no correlation between the variables.
 
+```{r}
 
+# Calculate the correlations between "BETA" and (n, se, p, frequency)
 
+columns_to_analyze <- c("effect_allele_freq", "se", "n", "p")
 
+correlation_values <- sapply(columns_to_analyze, function(col_name) {
+  cor(significant_snps$beta, significant_snps[, col_name])
+})
 
+# Create a data frame to store the results
+correlation_df <- data.frame( Column = columns_to_analyze, Correlation = correlation_values)
 
+correlation_df <- correlation_df %>%
+  arrange(desc(Correlation))
+  
+# Visuals 
+library(reshape2)
 
+# Melt the data frame for heatmap plotting
+melted_data <- melt(correlation_df, id.vars = "Column")
 
+# Create a heatmap
+heatmap_plot <- ggplot(melted_data, aes(x = variable, y = Column, fill = value)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
+  theme_minimal() +
+  labs(title = "Correlation Heatmap with Beta Coefficient") +
+  xlab(' ') +
+  ylab("Correlation Variable")
 
+print(heatmap_plot)
 
 
+# corr_effect_allele <- cor(significant_snps$effect_allele_freq, significant_snps$beta)
 
 
 
 
+```
 
+```         
+```
 
+-   `SE`(standard error) has a negative correlation with `BETA.` This
+    means that as `SE` increases, `BETA.` tends to decrease.
 
+-   `N`(sample size), `P` (p-value), `EFFECT_ALLELE_FREQ` all have
+    positive correlation with `BETA.` This means that as they increase,
+    `BETA.` tends to increase.
 
+`SE` has the strongest negative correlation with `BETA`and `N`, `P`and
+`EFFECT_ALLELE_FREQ` have positive correlations, with varying strengths
+(`N` \> `EFFECT_ALLELE_FREQ` \> `P`). So, in terms of absolute
+correlation strength:
 
+1.  `SE` (strong negative correlation)
 
+2.  `N` (moderate positive correlation)
 
+3.  `P` (weak positive correlation)
 
+4.  `EFFECT_ALLELE_FREQ` (weak positive correlation)
 
+**Return a table of statistical significance from the SNPs (p_value \<
+0.1) data frame retrieve**
 
+```{r}
+summary_table <- significant_snps %>%
+  group_by(ancestry) %>%
+  summarize(count_sig_snps = n(), beta_mean = mean(beta), allele_freq_mean = mean(effect_allele_freq))
 
+# Making it an explanatory table
+table <- kable(summary_table, digits=4,
+               caption="Count of Significant SNP's Per Ancestry") %>%
+  add_header_above(c(" " = 2,  "Metric" = 2))
 
+table
 
+```
 
+These results provide insights into the genetic variability of height
+across different super populations.
 
+For instance, the `EUROPEAN` super population has the highest number of
+significant SNPs, indicating a strong genetic influence on height in
+this population.
 
+The `beta coefficients` give an idea of the strength and direction of
+the genetic effect. A negative beta suggests a decrease in height, and a
+positive beta suggests an increase
 
+-   African: The average beta is -0.0015 (a decrease in height).
 
+-   East Asia: The average beta is -0.0009 (a decrease in height).
 
+-   European: The average beta is -0.0008 (a decrease in height).
 
+-   Hispanic: The average beta is -0.0034 (a significant decrease in
+    height).
 
+-   South Asia: The average beta is 0.0006 (a slight increase in
+    height).
 
+Comparing the beta values, we can see that the HISPANIC super group has
+the most negative and significant beta value, indicating the largest
+decrease in height associated with the significant SNPs.
 
+The magnitude of the beta value indicates the strength and direction of
+the effect. A larger absolute value of beta suggests a more substantial
+impact on the trait (height). In this context, the super group with the
+most negative (or lowest) average beta has the most significant effect
+on height because it experiences the greatest decrease in height
+associated with these SNPs.
 
+`Allele frequencies` show the allele's prevalence in each population.
+The categories have a close range of frequencies, suggesting that the
+occurrence of these SNPs on the trait isn't too different per group
 
+**How much of Europeans genetic variability can/cannot be found in other
+super populations? Does this provide enough argument for increasing the
+diversity of sequencing projects?**
 
+This implies comparing the overlap of SNPs found in the European super
+population with those in each of the other super populations. We could
+calculate the percentage of SNPs that match between European and each
+other super population
 
+```{r}
+shared_snps <- gene_var %>%
+  filter(ancestry == "EUROPEAN") %>%
+  select(snpid) %>%
+  semi_join(gene_var %>% filter(ancestry != "EUROPEAN"), by = "snpid")
 
+head(shared_snps, n = 3)
 
+```
 
+To test if the code effectively extracts snpid's that are found in
+multiple ancestries, we use this SNP, `3:129980909:A:G`
 
+```{r}
+gene_var %>%
+  filter(snpid == "3:129980909:A:G") %>%
+  distinct(ancestry)
+```
 
+We find that this particular SNP is found both the `European` &
+`East Asia` super population.
 
+And so, we:
 
+Calculate the total count of SNPs for each super population, filtering
+out the Europeans
 
+```{r}
+total_counts <- gene_var %>%
+  filter(ancestry != "EUROPEAN") %>%
+  group_by(ancestry) %>%
+  summarise(total_snps = n())
 
+```
 
+Calculate the count of shared SNPs for each super population
 
+```{r}
 
+shared_counts <- gene_var %>%
+  filter(ancestry != "EUROPEAN") %>%
+  group_by(ancestry) %>%
+  summarise(count_shared_snps = sum(snpid %in% shared_snps$snpid)) %>%
+  mutate(european_snp_count = c(4998))
+  
 
+```
 
+Combine the datasets
 
+```{r}
 
+comparison <- total_counts %>%
+  left_join(shared_counts, by = "ancestry") %>%
+  mutate(
+    shared_percentage = (count_shared_snps / total_snps) * 100)
 
+comparison
 
+```
 
+I believe with the number of shared genetic variability seen that this
+provides enough argument for increasing the diversity of sequencing
+projects, in this case amongst super populations
 
+**For European SNPs found in other super populations as well, do their
+statistical measures differ**
 
+It is clear that there are shared SNPs between super populations in our
+dataset, how do we intend to understand, if there is a clear difference
+between the super populations sharing the SNP.
 
+Let's pick the first
 
+```{r}
+head(shared_snps$snpid, n = 1)
 
+```
 
+`"1:28378384:C:T"` is the SNP of interest. So we start by extracting a
+data frame, containing only this value
 
+```{r}
+snp <- gene_var %>%
+  filter(snpid == "1:28378384:C:T")
 
+snp %>%
+  distinct(ancestry)
+```
 
+Visualize statistical measures to get a clear understanding of any
+differences between these groups
 
+```{r}
+ggplot(snp, aes(x = snpid, y = effect_allele_freq)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Effect Allele Frequency Comparison", x = "SNP ID", y = "Effect Allele Frequency")+
+  facet_wrap(~ancestry)
 
+```
 
+```{r}
+ggplot(snp, aes(x = snpid, y = beta)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Beta Coefficient Comparison", x = "SNP ID", y = "Beta Coefficient")+
+  facet_wrap(~ancestry) +
+  scale_y_reverse()
 
+```
 
+Basically for the SNP retrieved from European descent has a higher odds
+probability (Beta) score, as well as a higher frequency mark of
+occurring in the `European` descent as opposed to it's counterpart,
+`Africa`
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+Thank you!
